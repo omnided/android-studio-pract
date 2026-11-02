@@ -1,0 +1,18 @@
+# Gradle
+.gradle/
+build/
+.kotlin/
+
+# Шлях до Android SDK на конкретному комп'ютері
+local.properties
+
+# Android Studio: налаштування генеруються з Gradle-файлів
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Підписування релізу
+*.jks
+*.keystore
