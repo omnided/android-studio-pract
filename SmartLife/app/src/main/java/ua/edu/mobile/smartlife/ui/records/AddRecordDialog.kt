@@ -2,12 +2,12 @@ package ua.edu.mobile.smartlife.ui.records
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,33 +20,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import ua.edu.mobile.smartlife.data.model.RecordType
+import ua.edu.mobile.smartlife.ui.components.icon
 
-/** Діалог «Новий запис»: вибір типу, поле значення з перевіркою, нотатка. */
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * Діалог створення/редагування запису.
+ * Сам нічого не зберігає — лише повертає введені дані через onSave.
+ */
 @Composable
 fun AddRecordDialog(
-    initialType: RecordType,
     onDismiss: () -> Unit,
-    onConfirm: (RecordType, Double, String) -> Unit,
+    onSave: (type: RecordType, value: Double, note: String) -> Unit,
+    title: String = "Новий запис",
+    initialType: RecordType = RecordType.WATER,
+    initialValue: String = "",
+    initialNote: String = ""
 ) {
-    // rememberSaveable: введений текст не зникає після повороту екрана
     var type by rememberSaveable { mutableStateOf(initialType) }
-    var valueText by rememberSaveable { mutableStateOf("") }
-    var note by rememberSaveable { mutableStateOf("") }
+    var valueText by rememberSaveable { mutableStateOf(initialValue) }
+    var note by rememberSaveable { mutableStateOf(initialNote) }
+
+    // Кома чи крапка — обидва варіанти приймаємо
     val value = valueText.replace(',', '.').toDoubleOrNull()
     val isValueValid = value != null && value > 0
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новий запис") },
+        title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Тип показника")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    RecordType.entries.forEach { option ->
+                    RecordType.entries.forEach { item ->
                         FilterChip(
-                            selected = type == option,
-                            onClick = { type = option },
-                            label = { Text(option.title) },
+                            selected = item == type,
+                            onClick = { type = item },
+                            label = { Text(item.title) },
+                            leadingIcon = { Icon(item.icon, contentDescription = null) }
                         )
                     }
                 }
@@ -54,28 +63,30 @@ fun AddRecordDialog(
                     value = valueText,
                     onValueChange = { valueText = it },
                     label = { Text("Значення, ${type.unit}") },
-                    singleLine = true,
                     isError = valueText.isNotEmpty() && !isValueValid,
                     supportingText = {
                         if (valueText.isNotEmpty() && !isValueValid) Text("Введіть додатне число")
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("Нотатка") },
-                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Нотатка (необов'язково)") },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(type, value!!, note.trim()) },
-                enabled = isValueValid,
+                onClick = { onSave(type, value!!, note.trim()) },
+                enabled = isValueValid
             ) { Text("Зберегти") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Скасувати") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Скасувати") }
+        }
     )
 }

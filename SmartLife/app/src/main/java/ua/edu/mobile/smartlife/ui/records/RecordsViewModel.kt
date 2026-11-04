@@ -14,16 +14,16 @@ import ua.edu.mobile.smartlife.data.model.HealthRecord
 import ua.edu.mobile.smartlife.data.model.RecordType
 import ua.edu.mobile.smartlife.data.repository.RecordRepository
 
-class RecordsViewModel(private val recordRepository: RecordRepository) : ViewModel() {
+/** ViewModel екрана «Журнал»: отримує дані з репозиторію, а не зберігає їх сама. */
+class RecordsViewModel(
+    private val recordRepository: RecordRepository
+) : ViewModel() {
 
-    /** Практичне завдання 2.6 (стан): обраний фільтр; null – показати всі записи. */
+    // Обраний фільтр: null — показуємо всі записи. Змінювати його може лише ViewModel
     private val _selectedType = MutableStateFlow<RecordType?>(null)
     val selectedType: StateFlow<RecordType?> = _selectedType.asStateFlow()
 
-    /**
-     * Практичне завдання 2.6 (архітектура): при зміні фільтра flatMapLatest
-     * перемикається на відповідний потік репозиторію – усі записи або observeRecordsByType(type).
-     */
+    // flatMapLatest при зміні фільтра відписується від старого потоку і підписується на новий
     @OptIn(ExperimentalCoroutinesApi::class)
     val records: StateFlow<List<HealthRecord>> = _selectedType
         .flatMapLatest { type ->
@@ -38,7 +38,7 @@ class RecordsViewModel(private val recordRepository: RecordRepository) : ViewMod
 
     fun addRecord(type: RecordType, value: Double, note: String) {
         viewModelScope.launch {
-            recordRepository.addRecord(HealthRecord(id = 0, type = type, value = value, note = note))
+            recordRepository.addRecord(HealthRecord(type = type, value = value, note = note))
         }
     }
 }

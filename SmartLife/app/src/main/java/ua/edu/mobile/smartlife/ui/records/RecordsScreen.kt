@@ -3,7 +3,6 @@ package ua.edu.mobile.smartlife.ui.records
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,11 +36,10 @@ import ua.edu.mobile.smartlife.ui.AppViewModelProvider
 import ua.edu.mobile.smartlife.ui.components.RecordCard
 import ua.edu.mobile.smartlife.ui.components.icon
 
-/** Отримує ViewModel і передає далі лише дані та лямбди. */
 @Composable
 fun RecordsScreen(
     onRecordClick: (Long) -> Unit,
-    viewModel: RecordsViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    viewModel: RecordsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val records by viewModel.records.collectAsStateWithLifecycle()
     val selectedType by viewModel.selectedType.collectAsStateWithLifecycle()
@@ -49,48 +47,56 @@ fun RecordsScreen(
         records = records,
         selectedType = selectedType,
         onSelectType = viewModel::selectType,
-        onAdd = viewModel::addRecord,
-        onRecordClick = onRecordClick,
+        onAddRecord = viewModel::addRecord,
+        onRecordClick = onRecordClick
     )
 }
 
-/** Нічого не знає про ViewModel, тому її легко показати в @Preview і протестувати. */
+/**
+ * Екран списку без власних даних (stateless): список і обраний фільтр приходять параметрами,
+ * а про дії користувача екран повідомляє через onSelectType і onAddRecord (state hoisting).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordsContent(
     records: List<HealthRecord>,
     selectedType: RecordType?,
     onSelectType: (RecordType?) -> Unit,
-    onAdd: (RecordType, Double, String) -> Unit,
-    onRecordClick: (Long) -> Unit,
+    onAddRecord: (RecordType, Double, String) -> Unit,
+    onRecordClick: (Long) -> Unit
 ) {
+    // Стан діалогу — суто UI-стан, тому лишається локальним
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Журнал показників") }) },
+        topBar = { TopAppBar(title = { Text("Журнал показників (${records.size})") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 Icon(Icons.Filled.Add, contentDescription = "Додати запис")
             }
-        },
-        contentWindowInsets = WindowInsets(0),
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             TypeFilterRow(selectedType = selectedType, onSelectType = onSelectType)
             if (records.isEmpty()) {
                 Text(
                     text = if (selectedType == null) "Записів поки немає"
                     else "Записів типу «${selectedType.title}» немає",
-                    modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp)
                 )
             }
             LazyColumn(
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 88.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(records, key = { it.id }) { record ->
-                    RecordCard(record, onClick = { onRecordClick(record.id) })
+                    RecordCard(record = record, onClick = { onRecordClick(record.id) })
                 }
             }
         }
@@ -98,40 +104,44 @@ fun RecordsContent(
 
     if (showAddDialog) {
         AddRecordDialog(
-            initialType = selectedType ?: RecordType.WATER,
             onDismiss = { showAddDialog = false },
-            onConfirm = { type, value, note ->
-                onAdd(type, value, note)
+            onSave = { type, value, note ->
+                onAddRecord(type, value, note)
                 showAddDialog = false
             },
+            // Якщо обрано фільтр — новий запис одразу цього типу
+            initialType = selectedType ?: RecordType.WATER
         )
     }
 }
 
-/** Практичне завдання 2.6 (стан): чипи-фільтри над списком. */
+/** Чипи-фільтри над списком: «Усі» + по одному на кожен тип запису. */
 @Composable
-private fun TypeFilterRow(selectedType: RecordType?, onSelectType: (RecordType?) -> Unit) {
+private fun TypeFilterRow(
+    selectedType: RecordType?,
+    onSelectType: (RecordType?) -> Unit
+) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
             FilterChip(
                 selected = selectedType == null,
                 onClick = { onSelectType(null) },
-                label = { Text("Усі") },
+                label = { Text("Усі") }
             )
         }
         items(RecordType.entries) { type ->
             FilterChip(
-                selected = selectedType == type,
-                // повторне натискання на обраний чип знімає фільтр
-                onClick = { onSelectType(if (selectedType == type) null else type) },
+                selected = type == selectedType,
+                // Повторне натискання на обраний чип знімає фільтр
+                onClick = { onSelectType(if (type == selectedType) null else type) },
                 label = { Text(type.title) },
                 leadingIcon = {
                     Icon(type.icon, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize))
-                },
+                }
             )
         }
     }

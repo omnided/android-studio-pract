@@ -17,10 +17,10 @@ class InMemoryRecordRepositoryTest {
     fun observeRecordsByType_returnsOnlyRecordsOfThatType() = runTest {
         val repository = InMemoryRecordRepository(FakeData.records)
 
-        val sleep = repository.observeRecordsByType(RecordType.SLEEP).first()
+        val water = repository.observeRecordsByType(RecordType.WATER).first()
 
-        assertEquals(FakeData.records.count { it.type == RecordType.SLEEP }, sleep.size)
-        assertTrue(sleep.all { it.type == RecordType.SLEEP })
+        assertEquals(FakeData.records.count { it.type == RecordType.WATER }, water.size)
+        assertTrue(water.all { it.type == RecordType.WATER })
     }
 
     @Test
@@ -28,7 +28,7 @@ class InMemoryRecordRepositoryTest {
         val repository = InMemoryRecordRepository(FakeData.records)
         val before = repository.observeRecordsByType(RecordType.PULSE).first().size
 
-        repository.addRecord(HealthRecord(id = 0, type = RecordType.PULSE, value = 80.0))
+        repository.addRecord(HealthRecord(type = RecordType.PULSE, value = 80.0))
 
         assertEquals(before + 1, repository.observeRecordsByType(RecordType.PULSE).first().size)
     }
@@ -37,7 +37,7 @@ class InMemoryRecordRepositoryTest {
     fun addRecord_assignsNextId_andDeleteRemovesIt() = runTest {
         val repository = InMemoryRecordRepository(FakeData.records)
 
-        val id = repository.addRecord(HealthRecord(id = 0, type = RecordType.WATER, value = 0.25))
+        val id = repository.addRecord(HealthRecord(type = RecordType.WATER, value = 0.25))
         assertEquals(FakeData.records.maxOf { it.id } + 1, id)
 
         repository.deleteRecord(id)

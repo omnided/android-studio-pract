@@ -4,15 +4,22 @@ import kotlinx.coroutines.flow.Flow
 import ua.edu.mobile.smartlife.data.model.HealthRecord
 import ua.edu.mobile.smartlife.data.model.RecordType
 
-/** Контракт шару даних: що можна робити із записами, але не як. */
+/**
+ * Репозиторій — єдине джерело даних про записи для решти застосунку.
+ * ViewModel не знає, ЗВІДКИ беруться дані (пам'ять, база даних, сервер) — лише ЩО можна зробити.
+ */
 interface RecordRepository {
+    /** Усі записи, від найновішого до найстарішого. Flow сам повідомляє про зміни. */
     fun observeRecords(): Flow<List<HealthRecord>>
 
-    /** Практичне завдання 2.6 (архітектура): записи лише одного типу. */
+    /** Записи лише одного типу (практичне завдання 2.6 — фільтр журналу). */
     fun observeRecordsByType(type: RecordType): Flow<List<HealthRecord>>
 
     fun observeRecord(id: Long): Flow<HealthRecord?>
+
     suspend fun addRecord(record: HealthRecord): Long
+
     suspend fun updateRecord(record: HealthRecord)
+
     suspend fun deleteRecord(id: Long)
 }

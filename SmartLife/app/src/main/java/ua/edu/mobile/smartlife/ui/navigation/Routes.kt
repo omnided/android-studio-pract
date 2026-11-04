@@ -7,7 +7,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.serialization.Serializable
 
-// Типобезпечні маршрути: бібліотека навігації сама перетворює їх на адреси і назад
+// Маршрути (routes) — "адреси" екранів. @Serializable потрібен для типобезпечної навігації.
 @Serializable object LoginRoute
 @Serializable object HomeRoute
 @Serializable object RecordsRoute
@@ -15,10 +15,14 @@ import kotlinx.serialization.Serializable
 @Serializable data class RecordDetailsRoute(val recordId: Long)
 
 /** Пункт нижньої панелі навігації. */
-data class TopLevelRoute<T : Any>(val label: String, val route: T, val icon: ImageVector)
+data class TopLevelDestination(
+    val route: Any,
+    val label: String,
+    val icon: ImageVector
+)
 
-val topLevelRoutes = listOf(
-    TopLevelRoute("Головна", HomeRoute, Icons.Filled.Home),
-    TopLevelRoute("Журнал", RecordsRoute, Icons.AutoMirrored.Filled.List),
-    TopLevelRoute("Профіль", ProfileRoute, Icons.Filled.Person),
+val topLevelDestinations = listOf(
+    TopLevelDestination(HomeRoute, "Головна", Icons.Filled.Home),
+    TopLevelDestination(RecordsRoute, "Журнал", Icons.AutoMirrored.Filled.List),
+    TopLevelDestination(ProfileRoute, "Профіль", Icons.Filled.Person)
 )

@@ -7,27 +7,29 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 private val LightColors = lightColorScheme(
-    primary = Green40,
-    primaryContainer = Green90,
-    secondary = GreenGrey40,
-    tertiary = Teal40,
+    primary = Teal40,
+    primaryContainer = TealContainerLight,
+    secondary = Slate40,
+    secondaryContainer = SlateContainerLight,
+    tertiary = Coral40
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Green80,
-    primaryContainer = Green30,
-    secondary = GreenGrey80,
-    tertiary = Teal80,
+    primary = Teal80,
+    primaryContainer = TealContainerDark,
+    secondary = Slate80,
+    secondaryContainer = SlateContainerDark,
+    tertiary = Coral80
 )
 
+/** Тема застосунку: кольори Material 3 для світлого та темного режимів. */
 @Composable
 fun SmartLifeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = Typography,
-        content = content,
+        content = content
     )
 }

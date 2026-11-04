@@ -2,24 +2,21 @@ package ua.edu.mobile.smartlife.data
 
 import ua.edu.mobile.smartlife.data.model.HealthRecord
 import ua.edu.mobile.smartlife.data.model.RecordType
-import java.time.LocalDateTime
 
-/** Тестові дані, щоб екрани не були порожніми. */
+/** Тимчасові демонстраційні дані для прототипу інтерфейсу (розділ 3). */
 object FakeData {
-    const val USER_NAME = "Олена"
-    const val USER_EMAIL = "olena@example.com"
-    const val WATER_GOAL_LITERS = 2.0
+    private const val HOUR = 60 * 60 * 1000L
+    private val now = System.currentTimeMillis()
 
-    private val now: LocalDateTime = LocalDateTime.now()
+    val userName = "Олена"
+    val userEmail = "olena@example.com"
 
-    val records: List<HealthRecord> = listOf(
-        HealthRecord(8, RecordType.WATER, 0.25, "Склянка води", now.minusMinutes(30)),
-        HealthRecord(7, RecordType.PULSE, 72.0, "Після ранкової прогулянки", now.minusHours(1)),
-        HealthRecord(6, RecordType.WATER, 0.25, "Склянка води", now.minusHours(2)),
-        HealthRecord(5, RecordType.WEIGHT, 61.4, "Зранку натще", now.minusHours(3)),
-        HealthRecord(4, RecordType.SLEEP, 7.5, "Прокинулась сама", now.minusHours(4)),
-        HealthRecord(3, RecordType.PULSE, 64.0, "У спокої", now.minusDays(1)),
-        HealthRecord(2, RecordType.SLEEP, 6.0, "Пізно ліг(ла)", now.minusDays(1).minusHours(4)),
-        HealthRecord(1, RecordType.WEIGHT, 61.8, "", now.minusDays(2)),
+    val records = listOf(
+        HealthRecord(1, RecordType.WATER, 0.5, "Після пробіжки", now - 1 * HOUR),
+        HealthRecord(2, RecordType.PULSE, 72.0, "У стані спокою", now - 2 * HOUR),
+        HealthRecord(3, RecordType.SLEEP, 7.5, "", now - 8 * HOUR),
+        HealthRecord(4, RecordType.WEIGHT, 64.2, "Ранкове зважування", now - 9 * HOUR),
+        HealthRecord(5, RecordType.MOOD, 4.0, "Гарний день", now - 26 * HOUR),
+        HealthRecord(6, RecordType.WATER, 0.3, "", now - 27 * HOUR)
     )
 }

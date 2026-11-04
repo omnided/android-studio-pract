@@ -33,10 +33,10 @@ class RecordsViewModelTest {
         val viewModel = RecordsViewModel(InMemoryRecordRepository(FakeData.records))
         backgroundScope.launch { viewModel.records.collect {} } // підписка для WhileSubscribed
 
-        viewModel.selectType(RecordType.PULSE)
-        assertEquals(RecordType.PULSE, viewModel.selectedType.value)
-        assertTrue(viewModel.records.value.isNotEmpty())
-        assertTrue(viewModel.records.value.all { it.type == RecordType.PULSE })
+        viewModel.selectType(RecordType.WATER)
+        assertEquals(RecordType.WATER, viewModel.selectedType.value)
+        assertEquals(FakeData.records.count { it.type == RecordType.WATER }, viewModel.records.value.size)
+        assertTrue(viewModel.records.value.all { it.type == RecordType.WATER })
 
         viewModel.selectType(null)
         assertEquals(FakeData.records.size, viewModel.records.value.size)

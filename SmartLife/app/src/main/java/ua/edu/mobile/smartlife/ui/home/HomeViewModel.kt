@@ -7,45 +7,40 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import ua.edu.mobile.smartlife.data.FakeData
+import ua.edu.mobile.smartlife.data.model.DailySummary
 import ua.edu.mobile.smartlife.data.model.HealthRecord
 import ua.edu.mobile.smartlife.data.model.RecordType
+import ua.edu.mobile.smartlife.data.model.toDailySummary
 import ua.edu.mobile.smartlife.data.repository.RecordRepository
-import java.time.LocalDate
 
-/** Стан головного екрана: підсумки дня і останні записи. */
+/** Усе, що потрібно головному екрану, в одному об'єкті. */
 data class HomeUiState(
-    val waterToday: Double = 0.0,
-    val lastPulse: HealthRecord? = null,
-    val lastSleep: HealthRecord? = null,
-    val lastWeight: HealthRecord? = null,
-    val recentRecords: List<HealthRecord> = emptyList(),
+    val userName: String = "",
+    val summary: DailySummary = DailySummary(),
+    val recentRecords: List<HealthRecord> = emptyList()
 )
 
-class HomeViewModel(private val recordRepository: RecordRepository) : ViewModel() {
+class HomeViewModel(
+    private val recordRepository: RecordRepository
+) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = recordRepository.observeRecords()
         .map { records ->
-            val today = LocalDate.now()
             HomeUiState(
-                waterToday = records
-                    .filter { it.type == RecordType.WATER && it.dateTime.toLocalDate() == today }
-                    .sumOf { it.value },
-                lastPulse = records.lastOfType(RecordType.PULSE),
-                lastSleep = records.lastOfType(RecordType.SLEEP),
-                lastWeight = records.lastOfType(RecordType.WEIGHT),
-                recentRecords = records.sortedByDescending { it.dateTime }.take(5),
+                userName = FakeData.userName,
+                summary = records.toDailySummary(),
+                recentRecords = records.take(3)
             )
         }
+        // Перетворюємо Flow на StateFlow, який "живе" поки на екран хтось дивиться (+5 с запасу)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     fun addWaterGlass() {
         viewModelScope.launch {
             recordRepository.addRecord(
-                HealthRecord(id = 0, type = RecordType.WATER, value = 0.25, note = "Склянка води")
+                HealthRecord(type = RecordType.WATER, value = 0.25, note = "Склянка води")
             )
         }
     }
-
-    private fun List<HealthRecord>.lastOfType(type: RecordType): HealthRecord? =
-        filter { it.type == type }.maxByOrNull { it.dateTime }
 }

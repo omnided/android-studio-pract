@@ -1,29 +1,32 @@
 package ua.edu.mobile.smartlife.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,117 +36,186 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ua.edu.mobile.smartlife.data.FakeData
-import ua.edu.mobile.smartlife.data.model.HealthRecord
 import ua.edu.mobile.smartlife.data.model.RecordType
-import ua.edu.mobile.smartlife.data.model.formattedValue
 import ua.edu.mobile.smartlife.ui.AppViewModelProvider
-import ua.edu.mobile.smartlife.ui.components.AboutDialog
 import ua.edu.mobile.smartlife.ui.components.RecordCard
-import java.util.Locale
+import ua.edu.mobile.smartlife.ui.components.icon
 
+private const val WATER_GOAL_LITERS = 2.0
+
+/** Stateful-обгортка: отримує ViewModel і передає її стан у HomeContent. */
 @Composable
 fun HomeScreen(
     onRecordClick: (Long) -> Unit,
-    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    onOpenRecords: () -> Unit,
+    onLogout: () -> Unit,
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    HomeContent(uiState = uiState, onAddWater = viewModel::addWaterGlass, onRecordClick = onRecordClick)
+    HomeContent(
+        uiState = uiState,
+        onAddWater = viewModel::addWaterGlass,
+        onRecordClick = onRecordClick,
+        onOpenRecords = onOpenRecords,
+        onLogout = onLogout
+    )
 }
 
+/** Stateless-частина: лише малює те, що отримала в параметрах. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeContent(
     uiState: HomeUiState,
     onAddWater: () -> Unit,
     onRecordClick: (Long) -> Unit,
+    onOpenRecords: () -> Unit,
+    onLogout: () -> Unit
 ) {
-    // Відкрите меню не потрібно зберігати після повороту – досить remember
     var menuExpanded by remember { mutableStateOf(false) }
-    // Відкритий діалог має пережити поворот – rememberSaveable
+    // Відкритий діалог має пережити поворот екрана, тому rememberSaveable (меню — достатньо remember)
     var showAbout by rememberSaveable { mutableStateOf(false) }
+    val summary = uiState.summary
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Smart Life") },
                 actions = {
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = "Меню")
-                        }
-                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text("Про застосунок") },
-                                leadingIcon = { Icon(Icons.Filled.Info, contentDescription = null) },
-                                onClick = { menuExpanded = false; showAbout = true },
-                            )
-                        }
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "Меню")
                     }
-                },
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Про застосунок") },
+                            leadingIcon = { Icon(Icons.Filled.Info, null) },
+                            onClick = { menuExpanded = false; showAbout = true }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Вийти") },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.Logout, null) },
+                            onClick = { menuExpanded = false; onLogout() }
+                        )
+                    }
+                }
             )
-        },
-        // відступ знизу дає нижня панель навігації в SmartLifeApp
-        contentWindowInsets = WindowInsets(0),
-    ) { padding ->
+        }
+    ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Text("Вітаю, ${FakeData.USER_NAME}!", style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    text = "Вітаю, ${uiState.userName}!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Ваші показники за сьогодні",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            item { WaterCard(waterToday = uiState.waterToday, onAddWater = onAddWater) }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SummaryCard(RecordType.PULSE, uiState.lastPulse, Modifier.weight(1f))
-                    SummaryCard(RecordType.SLEEP, uiState.lastSleep, Modifier.weight(1f))
-                    SummaryCard(RecordType.WEIGHT, uiState.lastWeight, Modifier.weight(1f))
+                WaterCard(liters = summary.waterLiters, onAddWater = onAddWater)
+            }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SummaryCard(RecordType.PULSE.icon, "Пульс", summary.lastPulse.format(""), Modifier.weight(1f))
+                    SummaryCard(RecordType.SLEEP.icon, "Сон", summary.lastSleep.format("год"), Modifier.weight(1f))
+                    SummaryCard(RecordType.WEIGHT.icon, "Вага", summary.lastWeight.format("кг"), Modifier.weight(1f))
                 }
             }
-            item { Text("Останні записи", style = MaterialTheme.typography.titleMedium) }
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Останні записи", style = MaterialTheme.typography.titleMedium)
+                    TextButton(onClick = onOpenRecords) { Text("Усі записи") }
+                }
+            }
             items(uiState.recentRecords, key = { it.id }) { record ->
-                RecordCard(record, onClick = { onRecordClick(record.id) })
+                RecordCard(record = record, onClick = { onRecordClick(record.id) })
             }
         }
     }
 
     if (showAbout) {
-        AboutDialog(onDismiss = { showAbout = false })
+        AlertDialog(
+            onDismissRequest = { showAbout = false },
+            icon = { Icon(Icons.Filled.Info, contentDescription = null) },
+            title = { Text("Про застосунок") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Smart Life, версія 0.5", style = MaterialTheme.typography.titleMedium)
+                    Text("Навчальний застосунок курсу «Мобільна розробка» для персонального моніторингу здоров'я: вода, пульс, сон, вага, настрій.")
+                    Text(
+                        "Kotlin · Jetpack Compose · MVVM",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAbout = false }) { Text("Зрозуміло") }
+            }
+        )
     }
 }
 
+/** Картка води з прогресом до денної цілі та кнопкою швидкого додавання. */
 @Composable
-private fun WaterCard(waterToday: Double, onAddWater: () -> Unit) {
-    val goal = FakeData.WATER_GOAL_LITERS
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                "Вода: ${String.format(Locale.US, "%.2f", waterToday)} з $goal л",
-                style = MaterialTheme.typography.titleMedium,
-            )
+private fun WaterCard(liters: Double, onAddWater: () -> Unit) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(RecordType.WATER.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = "Вода: ${"%.2f".format(liters)} з $WATER_GOAL_LITERS л",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                )
+            }
             LinearProgressIndicator(
-                progress = { (waterToday / goal).toFloat().coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth(),
+                progress = { (liters / WATER_GOAL_LITERS).toFloat().coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth()
             )
-            Button(onClick = onAddWater) { Text("Склянка води (0.25 л)") }
+            FilledTonalButton(onClick = onAddWater) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Text("Склянка води (0.25 л)", modifier = Modifier.padding(start = 8.dp))
+            }
         }
     }
 }
 
+/** Невелика картка з одним показником. */
 @Composable
-private fun SummaryCard(type: RecordType, record: HealthRecord?, modifier: Modifier = Modifier) {
-    Card(modifier) {
-        Column(
-            Modifier.fillMaxWidth().padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(type.title, style = MaterialTheme.typography.labelLarge)
-            Text(record?.formattedValue() ?: "—", style = MaterialTheme.typography.titleMedium)
+fun SummaryCard(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(modifier = modifier) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
     }
 }
+
+/** null -> «—», інакше число з одиницею. */
+private fun Double?.format(unit: String): String =
+    if (this == null) "—" else "${if (this % 1.0 == 0.0) toLong() else this} $unit".trim()
