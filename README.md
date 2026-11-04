@@ -31,16 +31,32 @@ HelloMobile/
 
 **Командний рядок (Windows), з папки `HelloMobile`:**
 
-```bat
-gradlew.bat assembleDebug          :: зібрати APK
-gradlew.bat installDebug           :: встановити на емулятор або пристрій
+Зібрати APK:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Встановити на емулятор або пристрій:
+
+```powershell
+.\gradlew.bat installDebug
 ```
 
 ## Тести
 
-```bat
-gradlew.bat test                   :: unit-тести (app/src/test)
-gradlew.bat connectedAndroidTest   :: інструментальні тести, потрібен запущений емулятор або пристрій
+Команди виконуються з папки проєкту (`HelloMobile` або `SmartLife`), а не з кореня репозиторію, і працюють у PowerShell і Command Prompt.
+
+Unit-тести (`app/src/test`):
+
+```powershell
+.\gradlew.bat test
+```
+
+Інструментальні тести (`app/src/androidTest`, є лише в `HelloMobile`), потрібен запущений емулятор або пристрій:
+
+```powershell
+.\gradlew.bat connectedAndroidTest
 ```
 
 В Android Studio тест можна запустити кнопкою **▶** біля класу або методу тесту.
@@ -78,7 +94,16 @@ gradlew.bat connectedAndroidTest   :: інструментальні тести,
 
 **Android Studio:** **File → Open** → папка `SmartLife` → дочекатися Gradle Sync → **▶ Run**. Увійти з будь-якими непорожніми логіном і паролем.
 
-Тести: правою кнопкою на папці `app/src/test` → **Run 'Tests in ...'** або `gradlew.bat testDebugUnitTest` з папки `SmartLife`.
+**Тести в Android Studio:** правою кнопкою на папці `app/src/test` → **Run 'Tests in ...'**.
+
+**Тести з командного рядка**, з кореня репозиторію:
+
+```powershell
+cd SmartLife
+.\gradlew.bat testDebugUnitTest
+```
+
+Якщо код не змінювався, Gradle покаже `UP-TO-DATE` і не запускатиме тести повторно. Примусовий запуск: `.\gradlew.bat testDebugUnitTest --rerun`.
 
 ## Демонстрація роботи
 
