@@ -1,5 +1,9 @@
 package ua.edu.mobile.smartlife.data.model
 
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
+
 /** Модель погоди, яку використовує UI (не залежить від формату JSON). */
 data class Weather(
     val temperature: Double,
@@ -9,8 +13,25 @@ data class Weather(
     val description: String,
     val weatherCode: Int,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val forecast: List<DailyForecast> = emptyList()
 )
+
+/** Прогноз на один день (практичне завдання 3.6). */
+data class DailyForecast(
+    val date: LocalDate,
+    val maxTemperature: Double,
+    val minTemperature: Double
+)
+
+/** Підпис дня для рядка прогнозу: «Сьогодні», «Завтра» або назва дня тижня («П'ятниця»). */
+fun forecastDayLabel(date: LocalDate, today: LocalDate = LocalDate.now()): String = when (date) {
+    today -> "Сьогодні"
+    today.plusDays(1) -> "Завтра"
+    else -> date.dayOfWeek
+        .getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("uk"))
+        .replaceFirstChar { it.uppercase() }
+}
 
 /** Розшифровка коду погоди WMO (https://open-meteo.com/en/docs, розділ "WMO Weather interpretation codes"). */
 fun weatherCodeToText(code: Int): String = when (code) {

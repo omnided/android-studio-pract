@@ -17,6 +17,15 @@ interface RecordDao {
     @Query("SELECT * FROM records ORDER BY created_at DESC")
     fun observeAll(): Flow<List<RecordEntity>>
 
+    // Практичне завдання 3.6: записи лише одного типу (тип зберігається рядком, наприклад "WATER")
+    @Query("SELECT * FROM records WHERE type = :type ORDER BY created_at DESC")
+    fun observeByType(type: String): Flow<List<RecordEntity>>
+
+    // Практичне завдання 3.6: пошук за нотаткою; || — конкатенація рядків у SQLite,
+    // тому запит перетворюється на LIKE '%текст%' (входження в будь-якому місці)
+    @Query("SELECT * FROM records WHERE note LIKE '%' || :query || '%' ORDER BY created_at DESC")
+    fun searchByNote(query: String): Flow<List<RecordEntity>>
+
     @Query("SELECT * FROM records WHERE id = :id")
     fun observeById(id: Long): Flow<RecordEntity?>
 

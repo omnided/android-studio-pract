@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import ua.edu.mobile.smartlife.data.model.DailyForecast
+import ua.edu.mobile.smartlife.data.model.forecastDayLabel
 import kotlin.math.roundToInt
 
 /** Картка погоди: показує один із трьох станів — завантаження, помилку або дані. */
@@ -91,7 +94,32 @@ fun WeatherCard(
                             Icon(Icons.Filled.Refresh, contentDescription = "Оновити погоду")
                         }
                     }
+                    // Практичне завдання 3.6: прогноз на 3 дні рядком під поточною погодою
+                    if (weather.forecast.isNotEmpty()) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                        ForecastRow(weather.forecast)
+                    }
                 }
+            }
+        }
+    }
+}
+
+/** Рядок прогнозу: для кожного дня — підпис, максимум і мінімум температури. */
+@Composable
+private fun ForecastRow(forecast: List<DailyForecast>) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        forecast.forEach { day ->
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(forecastDayLabel(day.date), style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = "${day.maxTemperature.roundToInt()}° / ${day.minTemperature.roundToInt()}°",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

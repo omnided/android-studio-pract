@@ -16,9 +16,12 @@ class RoomRecordRepository(
     override fun observeRecords(): Flow<List<HealthRecord>> =
         dao.observeAll().map { list -> list.map { it.toModel() } }
 
-    // Фільтр з практичного завдання 2.6 (поки що фільтруємо список у пам'яті)
+    // Фільтр за типом тепер виконує сама база (запит DAO observeByType)
     override fun observeRecordsByType(type: RecordType): Flow<List<HealthRecord>> =
-        observeRecords().map { list -> list.filter { it.type == type } }
+        dao.observeByType(type.name).map { list -> list.map { it.toModel() } }
+
+    override fun searchRecords(query: String): Flow<List<HealthRecord>> =
+        dao.searchByNote(query).map { list -> list.map { it.toModel() } }
 
     override fun observeRecord(id: Long): Flow<HealthRecord?> =
         dao.observeById(id).map { it?.toModel() }
