@@ -7,6 +7,8 @@
 | Гілка | Робота |
 |---|---|
 | `lab-01-first-app` | Основи Kotlin (KotlinBasics) і перший Compose-застосунок з лічильником (HelloMobile) |
+| `feature/task-2.6` | Розділ 2: інтерфейс, стан і архітектура — Smart Life 0.5 (SmartLife) |
+| `feature/task-3.6` | Розділ 3: локальні дані та мережа — Smart Life 0.7 (SmartLife) |
 
 ## Структура
 
@@ -30,16 +32,32 @@ HelloMobile/
 
 **Командний рядок (Windows), з папки `HelloMobile`:**
 
-```bat
-gradlew.bat assembleDebug          :: зібрати APK
-gradlew.bat installDebug           :: встановити на емулятор або пристрій
+Зібрати APK:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Встановити на емулятор або пристрій:
+
+```powershell
+.\gradlew.bat installDebug
 ```
 
 ## Тести
 
-```bat
-gradlew.bat test                   :: unit-тести (app/src/test)
-gradlew.bat connectedAndroidTest   :: інструментальні тести, потрібен запущений емулятор або пристрій
+Команди виконуються з папки проєкту (`HelloMobile` або `SmartLife`), а не з кореня репозиторію, і працюють у PowerShell і Command Prompt.
+
+Unit-тести (`app/src/test`):
+
+```powershell
+.\gradlew.bat test
+```
+
+Інструментальні тести (`app/src/androidTest`, є лише в `HelloMobile`), потрібен запущений емулятор або пристрій:
+
+```powershell
+.\gradlew.bat connectedAndroidTest
 ```
 
 В Android Studio тест можна запустити кнопкою **▶** біля класу або методу тесту.
@@ -54,3 +72,174 @@ gradlew.bat connectedAndroidTest   :: інструментальні тести,
 | Jetpack Compose BOM | 2025.08.00 |
 | compileSdk / targetSdk | 37 |
 | minSdk | 24 |
+
+---
+
+# Практичне завдання 2.6 — Smart Life 0.5
+
+Розділ 2 «Інтерфейс, стан і архітектура застосунку» (лабораторні роботи 3–4). Проєкт — папка [`SmartLife`](SmartLife). Основа — Stage 05 з посібника (гілка `develop`), у цій гілці лише зміни за завданням.
+
+## Опис реалізованого функціоналу
+
+На екран деталей запису додано кнопку «Поділитися», яка показує Snackbar з текстом запису, а діалог «Про застосунок» у меню головного екрана доповнено версією й описом і тепер переживає поворот екрана. У журналі з'явився фільтр за типом запису: стан фільтра зберігається в `RecordsViewModel` як `StateFlow<RecordType?>`, над списком — чипи-фільтри, а дані для фільтра надає новий метод репозиторію `observeRecordsByType(type)`.
+
+| Завдання | Тема | Що зроблено | Файли |
+|---|---|---|---|
+| 2.6.1 | Інтерфейс і навігація | Кнопка «Поділитися» на екрані деталей: `SnackbarHost` у `Scaffold`, текст формує `HealthRecord.shareText()`. Діалог «Про застосунок» (пункт меню ⋮): додано версію і опис, стан діалогу перенесено з `remember` у `rememberSaveable` | `ui/records/RecordDetailsScreen.kt`, `ui/components/RecordUi.kt`, `ui/home/HomeScreen.kt` |
+| 2.6.2 | Стан | У `RecordsViewModel` — приватний `MutableStateFlow<RecordType?>` і публічний `StateFlow` `selectedType` (`null` — усі записи), функція `selectType()`. Над списком — ряд `FilterChip` «Усі / Вода / Пульс / Вага / Сон / Настрій»; повторне натискання знімає фільтр; новий запис за замовчуванням отримує тип обраного фільтра | `ui/records/RecordsViewModel.kt`, `ui/records/RecordsScreen.kt` |
+| 2.6.3 | Архітектура | Метод `observeRecordsByType(type)` в інтерфейсі `RecordRepository` і в `InMemoryRecordRepository`; `RecordsViewModel` перемикається між `observeRecords()` і `observeRecordsByType()` через `flatMapLatest` | `data/repository/RecordRepository.kt`, `data/repository/InMemoryRecordRepository.kt`, `ui/records/RecordsViewModel.kt` |
+
+Додано unit-тести (`app/src/test`): `InMemoryRecordRepositoryTest` — фільтр за типом, оновлення після додавання, id нового запису і видалення; `RecordsViewModelTest` — вибір фільтра і повернення до «Усі».
+
+### Як запустити
+
+**Android Studio:** **File → Open** → папка `SmartLife` → дочекатися Gradle Sync → **▶ Run**. Увійти з будь-якими непорожніми логіном і паролем.
+
+**Тести в Android Studio:** правою кнопкою на папці `app/src/test` → **Run 'Tests in ...'**.
+
+**Тести з командного рядка**, з кореня репозиторію:
+
+```powershell
+cd SmartLife
+.\gradlew.bat testDebugUnitTest
+```
+
+Якщо код не змінювався, Gradle покаже `UP-TO-DATE` і не запускатиме тести повторно. Примусовий запуск: `.\gradlew.bat testDebugUnitTest --rerun`.
+
+## Демонстрація роботи
+
+| | |
+|---|---|
+| Журнал без фільтра (чип «Усі») | ![Журнал, усі записи](SmartLife/screenshots/01-records-all.png) |
+| Фільтр «Вода» — лише записи води | ![Фільтр Вода](SmartLife/screenshots/02-records-filter-water.png) |
+| Екран деталей: Snackbar після «Поділитися» | ![Поділитися](SmartLife/screenshots/03-details-share-snackbar.png) |
+| Меню ⋮ на головному екрані | ![Меню](SmartLife/screenshots/04-home-menu.png) |
+| Діалог «Про застосунок» | ![Про застосунок](SmartLife/screenshots/05-about-dialog.png) |
+| Unit-тести пройдено | ![Тести](SmartLife/screenshots/06-unit-tests.png) |
+
+## Відповіді на контрольні питання (розділ 2.7)
+
+**1. Чим декларативний UI відрізняється від імперативного?**
+В імперативному підході розробник сам знаходить елементи (`findViewById`) і вручну змінює їх: текст, видимість, списки. У декларативному (Jetpack Compose) описується, як має виглядати екран для поточних даних, а при зміні даних Compose сам повторно викликає потрібні функції (рекомпозиція). Коду менше, і екран не може розійтися з даними.
+
+**2. Для чого потрібні модифікатори і чи важливий їх порядок?**
+`Modifier` — ланцюжок налаштувань розміру, відступів, фону, рамки й реакції на натискання елемента. Порядок важливий, бо модифікатори застосовуються послідовно: `padding(16.dp).background(Gray)` дає фон усередині відступу, а `background(Gray).padding(16.dp)` — фон разом з відступом.
+
+**3. Чому для довгих списків використовують LazyColumn?**
+`LazyColumn` створює і компонує лише ті елементи, які видно на екрані, і перевикористовує їх під час прокручування. `Column` створив би одразу всі елементи, що для довгого списку марнує пам'ять і час. Параметр `key` допомагає Compose не перемальовувати зайві елементи при додаванні чи видаленні.
+
+**4. Як передати аргумент між екранами в Navigation Compose?**
+Маршрут описують `@Serializable data class` з полем-аргументом, наприклад `RecordDetailsRoute(val recordId: Long)`, і переходять через `navController.navigate(RecordDetailsRoute(id))`. На екрані призначення аргумент читають через `backStackEntry.toRoute<RecordDetailsRoute>()`, а у ViewModel — через `SavedStateHandle`: у проєкті `RecordDetailsViewModel` бере `savedStateHandle["recordId"]`. Тип аргументу перевіряє компілятор.
+
+**5. Що робить popUpTo?**
+`popUpTo(маршрут)` під час переходу видаляє зі стеку (back stack) екрани до вказаного маршруту; з `inclusive = true` видаляється і він сам. У Smart Life після входу `popUpTo(LoginRoute) { inclusive = true }` прибирає екран входу, тому «Назад» на головному екрані закриває застосунок, а не повертає до форми входу.
+
+**6. Чим remember відрізняється від rememberSaveable?**
+`remember` зберігає значення між рекомпозиціями, але втрачає його при перестворенні Activity (поворот, зміна мови). `rememberSaveable` додатково зберігає значення в `Bundle`, тому воно переживає поворот і тимчасове знищення процесу. У проєкті відкрите меню — `remember`, текст у полях діалогу — `rememberSaveable`.
+
+**7. Чому ViewModel переживає поворот екрана?**
+ViewModel зберігається у `ViewModelStore`, який система не знищує під час зміни конфігурації: нова Activity отримує той самий екземпляр. ViewModel очищається (`onCleared()`) лише тоді, коли екран закривається остаточно.
+
+**8. Що таке підйом стану?**
+Підйом стану (state hoisting) — винесення стану з composable-функції до її викликача: функція отримує значення і лямбду для його зміни як параметри (`records`, `selectedType`, `onSelectType`). Така функція не має власного стану, її легко перевикористати, показати в `@Preview` і протестувати (наприклад, `RecordsContent`).
+
+**9. Навіщо розділяти MutableStateFlow і StateFlow?**
+Приватний `MutableStateFlow` може змінювати лише ViewModel, а назовні через `asStateFlow()` віддається `StateFlow` тільки для читання. Так екран не може змінити стан напряму і лише надсилає події у ViewModel — це забезпечує односпрямований потік даних.
+
+**10. Чому стан має бути незмінним?**
+Compose помічає зміну стану, порівнюючи нове значення зі старим. Якщо змінити список «на місці» (`add`, `remove`), посилання не зміниться і інтерфейс не оновиться. Тому завжди створюється новий об'єкт: `listOf(new) + current`, `filterNot { }`, `copy()`.
+
+**11. Які шари виділяють в архітектурі Android-застосунку?**
+UI-шар (екрани Compose і ViewModel) показує стан і обробляє дії користувача. Шар даних (репозиторії і джерела даних: пам'ять, база, мережа) знає, звідки беруться дані. За потреби між ними додають доменний шар з бізнес-логікою (use case).
+
+**12. Навіщо ViewModel залежить від інтерфейсу репозиторію, а не від класу?**
+Щоб реалізацію можна було замінити без зміни ViewModel та екранів: зараз це `InMemoryRecordRepository`, далі за посібником буде `RoomRecordRepository`. Також у тестах можна підставити тестову реалізацію. Це принцип залежності від абстракцій.
+
+**13. Що таке єдине джерело правди?**
+Кожен тип даних має одного власника — репозиторій, а всі екрани спостерігають за ним через `Flow`. Тому дані завжди узгоджені: запис, доданий у журналі, одразу з'являється на головному екрані.
+
+**14. Для чого потрібна фабрика ViewModel?**
+Система створює ViewModel сама і за замовчуванням вміє викликати лише конструктор без параметрів. Якщо ViewModel має залежності (репозиторій, `SavedStateHandle`), потрібна `ViewModelProvider.Factory`, яка знає, як їх передати. У проєкті це `AppViewModelProvider.Factory`, що бере репозиторій з `AppContainer`.
+
+**15. Що робить stateIn з WhileSubscribed?**
+`stateIn` перетворює холодний `Flow` з репозиторію на гарячий `StateFlow` з початковим значенням (`emptyList()`), прив'язаний до `viewModelScope`. `SharingStarted.WhileSubscribed(5_000)` тримає підписку на джерело, поки є хоча б один підписник, і зупиняє її через 5 с після зникнення екрана. Цих 5 секунд досить, щоб під час повороту екрана підписка не переривалася.
+
+---
+
+# Практичне завдання 3.6 — Smart Life 0.7
+
+Розділ 3 «Робота з даними: локальне сховище та мережа» (лабораторні роботи 5–6). Основа — Smart Life Stage 07 з посібника (Room, DataStore, налаштування, погода Open-Meteo); зміни завдання 2.6 збережено.
+
+## Опис реалізованого функціоналу
+
+У `RecordDao` додано запит `observeByType(type)` і пошук за нотаткою `searchByNote(query)` з `LIKE '%' || :query || '%'`; у журналі з'явилося поле пошуку, яке працює разом із чипами-фільтрами за типом, і обидва фільтри тепер виконує база даних. На головному екрані під поточною погодою показано прогноз на 3 дні (максимум і мінімум температури) з параметром `daily=temperature_2m_max,temperature_2m_min`.
+
+| Завдання | Тема | Що зроблено | Файли |
+|---|---|---|---|
+| 3.6.1 | Локальні дані | `RecordDao`: `observeByType(type: String)` — `WHERE type = :type`, `searchByNote(query: String)` — `WHERE note LIKE '%' \|\| :query \|\| '%'`. Репозиторій: `observeRecordsByType()` тепер іде в базу через DAO (раніше фільтрувався список у пам'яті), новий метод `searchRecords(query)`. `RecordsViewModel`: стан пошуку `StateFlow<String>`, `combine` фільтра й пошуку + `flatMapLatest` на потрібний запит. Журнал: поле «Пошук за нотаткою» з кнопкою очищення, повідомлення «Нічого не знайдено» | `data/local/RecordDao.kt`, `data/repository/RecordRepository.kt`, `data/repository/RoomRecordRepository.kt`, `data/repository/InMemoryRecordRepository.kt`, `ui/records/RecordsViewModel.kt`, `ui/records/RecordsScreen.kt` |
+| 3.6.2 | Мережа | `WeatherApi`: параметри `daily=temperature_2m_max,temperature_2m_min` і `forecast_days=3`. DTO `DailyWeatherDto` (три паралельні масиви), модель `DailyForecast`, перетворення `DailyWeatherDto.toForecast()` у репозиторії. `WeatherCard`: рядок «Сьогодні / Завтра / день тижня» з температурою `max° / min°` під поточною погодою | `data/remote/WeatherApi.kt`, `data/remote/WeatherDto.kt`, `data/model/Weather.kt`, `data/repository/WeatherRepository.kt`, `ui/home/WeatherCard.kt` |
+
+Unit-тести (`app/src/test`): пошук за нотаткою в репозиторії, пошук разом із фільтром за типом у `RecordsViewModel`, перетворення денного прогнозу і підписи днів (`WeatherForecastTest`).
+
+> Примітка: у SQLite оператор `LIKE` не враховує регістр лише для латинських літер, тому для кирилиці пошук «Пробіжка» і «пробіжка» дає різні результати. Для навчального завдання цього досить; повноцінне рішення — зберігати нормалізовану копію нотатки або використати FTS.
+
+### Як запустити
+
+**Android Studio:** **File → Open** → папка `SmartLife` → **Sync Project with Gradle Files** (у цій версії додано Room, KSP, DataStore і Retrofit, тому синхронізація обов'язкова) → **▶ Run**. Увійти з будь-якими непорожніми логіном і паролем.
+
+- Журнал тепер зберігається в базі `smart_life.db` і під час першого запуску порожній: додайте кілька записів з нотатками кнопкою «+», щоб перевірити пошук і фільтр.
+- Для картки погоди потрібен інтернет на емуляторі. Якщо його немає, перезапустіть емулятор з параметром `-dns-server 8.8.8.8`.
+- Вміст бази можна переглянути: **View → Tool Windows → App Inspection → Database Inspector**.
+
+**Тести в Android Studio:** правою кнопкою на папці `app/src/test` → **Run 'Tests in ...'**. Мають пройти `InMemoryRecordRepositoryTest`, `RecordsViewModelTest` і `WeatherForecastTest`.
+
+**Тести з командного рядка**, з кореня репозиторію:
+
+```powershell
+cd SmartLife
+.\gradlew.bat testDebugUnitTest
+```
+
+Якщо код не змінювався, Gradle покаже `UP-TO-DATE` і не запускатиме тести повторно. Примусовий запуск: `.\gradlew.bat testDebugUnitTest --rerun`.
+
+## Демонстрація роботи
+
+| | |
+|---|---|
+| Пошук за нотаткою в журналі | ![Пошук](SmartLife/screenshots/07-records-search.png) |
+| Пошук разом із фільтром за типом | ![Пошук і тип](SmartLife/screenshots/08-records-search-type.png) |
+| Нічого не знайдено | ![Нічого не знайдено](SmartLife/screenshots/09-records-not-found.png) |
+| Картка погоди з прогнозом на 3 дні | ![Прогноз](SmartLife/screenshots/10-weather-forecast.png) |
+| Unit-тести пройдено | ![Тести](SmartLife/screenshots/11-unit-tests-3.6.png) |
+
+## Відповіді на контрольні питання (розділ 3.7)
+
+**1. Коли використовувати DataStore, а коли базу даних?**
+DataStore Preferences — для невеликого набору простих пар «ключ – значення»: налаштування, прапорці, сесія (у Smart Life — ім'я, тема, норма води). База даних Room — для структурованих даних, яких багато і які треба шукати, сортувати, фільтрувати й пов'язувати між собою (журнал показників).
+
+**2. Яке призначення @Entity, @Dao, @Database?**
+`@Entity` описує таблицю: клас — рядок, властивості — стовпці (`RecordEntity` → таблиця `records`). `@Dao` — інтерфейс із запитами до таблиці (`RecordDao`: `observeAll`, `observeByType`, `searchByNote`, `insert`, `update`, `deleteById`), реалізацію генерує KSP. `@Database` — абстрактний клас самої бази: перелік сутностей, версія схеми і доступ до DAO (`AppDatabase.recordDao()`).
+
+**3. Чому DAO-запит повертає Flow?**
+Room стежить за таблицею і після кожної вставки, зміни чи видалення сам видає новий результат запиту. Тому журнал, пошук і головний екран оновлюються автоматично, без повторного виклику запиту. Крім того, Flow читається асинхронно і не блокує головний потік.
+
+**4. Що таке міграція бази даних?**
+Перехід структури бази зі старої версії на нову без втрати даних користувача. Коли змінюється `@Entity` (новий стовпець, таблиця), збільшують `version` у `@Database` і описують `Migration` з SQL-командами, наприклад `ALTER TABLE records ADD COLUMN ...`. Без міграції Room відмовиться відкривати базу зі старою структурою.
+
+**5. Навіщо окремі класи RecordEntity і HealthRecord?**
+`RecordEntity` повторює структуру таблиці (тип — рядок `"WATER"`, стовпець `created_at`), а `HealthRecord` — зручна модель застосунку з `enum RecordType`. Перетворення `toModel()` / `toEntity()` ізолюють решту коду від того, як дані лежать у базі: зміна таблиці не зачіпає екрани й ViewModel.
+
+**6. З яких частин складається HTTP-запит?**
+Метод (GET, POST, PUT/PATCH, DELETE), URL з адресою ресурсу і query-параметрами після `?` (наприклад, `v1/forecast?latitude=50.45&daily=...`), заголовки (тип даних, авторизація тощо) і, за потреби, тіло запиту (для POST/PUT, найчастіше JSON).
+
+**7. Чим відрізняються коди 4xx і 5xx?**
+4xx — помилка клієнта: запит некоректний (400), потрібна авторизація (401), ресурс не знайдено (404); повторювати той самий запит без змін марно. 5xx — помилка на боці сервера (500, 503): запит правильний, але сервер не зміг його обробити, тож варто спробувати пізніше.
+
+**8. Навіщо окремі DTO і доменна модель?**
+DTO точно повторює JSON сервера (`temperature_2m`, паралельні масиви `daily`), а доменна модель (`Weather`, `DailyForecast`) зручна для інтерфейсу (текстовий опис погоди, `LocalDate`). Якщо сервер змінить формат, правиться лише DTO і перетворення в репозиторії, а екрани залишаються без змін.
+
+**9. Чому стан запиту описують sealed interface?**
+У запиту є скінченний набір станів — `Loading`, `Success`, `Error`, і кожен має свої дані. `sealed interface` закриває цей набір, тому `when (state)` у `WeatherCard` компілятор перевіряє на повноту: якщо забути обробити якийсь стан, код не збереться.
+
+**10. Чому не можна виконувати мережеві запити в головному потоці?**
+Головний потік обробляє дотики й малює інтерфейс приблизно кожні 16 мс. Мережевий запит триває сотні мілісекунд або секунди, тому інтерфейс «замерзне», а через 5 с система покаже діалог ANR; Android також прямо забороняє це винятком `NetworkOnMainThreadException`. Тому запити виконують у suspend-функціях Retrofit всередині корутин (`viewModelScope`), які не блокують головний потік.

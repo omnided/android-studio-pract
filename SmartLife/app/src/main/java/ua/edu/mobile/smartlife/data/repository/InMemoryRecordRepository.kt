@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import ua.edu.mobile.smartlife.data.model.HealthRecord
+import ua.edu.mobile.smartlife.data.model.RecordType
 
 /**
  * Реалізація репозиторію в оперативній пам'яті.
@@ -17,6 +18,13 @@ class InMemoryRecordRepository(
     private val records = MutableStateFlow(initialRecords.sortedByDescending { it.timestamp })
 
     override fun observeRecords(): Flow<List<HealthRecord>> = records
+
+    // Фільтруємо на рівні репозиторію: у Room це стане запитом WHERE type = :type
+    override fun observeRecordsByType(type: RecordType): Flow<List<HealthRecord>> =
+        records.map { list -> list.filter { it.type == type } }
+
+    override fun searchRecords(query: String): Flow<List<HealthRecord>> =
+        records.map { list -> list.filter { it.note.contains(query, ignoreCase = true) } }
 
     override fun observeRecord(id: Long): Flow<HealthRecord?> =
         records.map { list -> list.find { it.id == id } }
