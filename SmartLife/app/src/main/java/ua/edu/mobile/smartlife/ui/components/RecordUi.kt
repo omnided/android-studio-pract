@@ -32,3 +32,9 @@ fun HealthRecord.formattedValue(): String {
 private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.forLanguageTag("uk"))
 
 fun formatDate(timestamp: Long): String = dateFormat.format(Date(timestamp))
+
+/** Текст запису для кнопки «Поділитися», наприклад «Пульс: 72 уд/хв (04.11.2026 15:30). Нотатка: …». */
+fun HealthRecord.shareText(): String = buildString {
+    append("${type.title}: ${formattedValue()} (${formatDate(timestamp)})")
+    if (note.isNotBlank()) append(". Нотатка: $note")
+}

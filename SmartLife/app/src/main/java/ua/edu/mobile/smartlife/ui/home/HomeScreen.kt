@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,7 +77,8 @@ fun HomeContent(
     onLogout: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    var showAbout by remember { mutableStateOf(false) }
+    // Відкритий діалог має пережити поворот екрана, тому rememberSaveable (меню — достатньо remember)
+    var showAbout by rememberSaveable { mutableStateOf(false) }
     val summary = uiState.summary
 
     Scaffold(
@@ -152,7 +154,17 @@ fun HomeContent(
             onDismissRequest = { showAbout = false },
             icon = { Icon(Icons.Filled.Info, contentDescription = null) },
             title = { Text("Про застосунок") },
-            text = { Text("Smart Life — навчальний застосунок курсу «Мобільна розробка».") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Smart Life, версія 0.5", style = MaterialTheme.typography.titleMedium)
+                    Text("Навчальний застосунок курсу «Мобільна розробка» для персонального моніторингу здоров'я: вода, пульс, сон, вага, настрій.")
+                    Text(
+                        "Kotlin · Jetpack Compose · MVVM",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
             confirmButton = {
                 TextButton(onClick = { showAbout = false }) { Text("Зрозуміло") }
             }
