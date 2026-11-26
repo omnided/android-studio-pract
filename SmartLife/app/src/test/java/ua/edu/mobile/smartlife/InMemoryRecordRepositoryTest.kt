@@ -34,6 +34,15 @@ class InMemoryRecordRepositoryTest {
     }
 
     @Test
+    fun searchRecords_findsByNoteIgnoringCase() = runTest {
+        val repository = InMemoryRecordRepository(FakeData.records)
+
+        val found = repository.searchRecords("ПРОБІЖ").first()
+
+        assertEquals(listOf("Після пробіжки"), found.map { it.note })
+    }
+
+    @Test
     fun addRecord_assignsNextId_andDeleteRemovesIt() = runTest {
         val repository = InMemoryRecordRepository(FakeData.records)
 

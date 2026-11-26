@@ -23,6 +23,9 @@ class InMemoryRecordRepository(
     override fun observeRecordsByType(type: RecordType): Flow<List<HealthRecord>> =
         records.map { list -> list.filter { it.type == type } }
 
+    override fun searchRecords(query: String): Flow<List<HealthRecord>> =
+        records.map { list -> list.filter { it.note.contains(query, ignoreCase = true) } }
+
     override fun observeRecord(id: Long): Flow<HealthRecord?> =
         records.map { list -> list.find { it.id == id } }
 

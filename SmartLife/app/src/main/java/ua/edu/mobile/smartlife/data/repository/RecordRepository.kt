@@ -15,6 +15,9 @@ interface RecordRepository {
     /** Записи лише одного типу (практичне завдання 2.6 — фільтр журналу). */
     fun observeRecordsByType(type: RecordType): Flow<List<HealthRecord>>
 
+    /** Записи, нотатка яких містить [query] (практичне завдання 3.6 — пошук у журналі). */
+    fun searchRecords(query: String): Flow<List<HealthRecord>>
+
     fun observeRecord(id: Long): Flow<HealthRecord?>
 
     suspend fun addRecord(record: HealthRecord): Long

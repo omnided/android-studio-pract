@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -46,22 +47,25 @@ import ua.edu.mobile.smartlife.ui.AppViewModelProvider
 import ua.edu.mobile.smartlife.ui.components.RecordCard
 import ua.edu.mobile.smartlife.ui.components.icon
 
-private const val WATER_GOAL_LITERS = 2.0
-
 /** Stateful-обгортка: отримує ViewModel і передає її стан у HomeContent. */
 @Composable
 fun HomeScreen(
     onRecordClick: (Long) -> Unit,
     onOpenRecords: () -> Unit,
+    onOpenSettings: () -> Unit,
     onLogout: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val weatherState by viewModel.weatherState.collectAsStateWithLifecycle()
     HomeContent(
         uiState = uiState,
+        weatherState = weatherState,
+        onRetryWeather = viewModel::loadWeather,
         onAddWater = viewModel::addWaterGlass,
         onRecordClick = onRecordClick,
         onOpenRecords = onOpenRecords,
+        onOpenSettings = onOpenSettings,
         onLogout = onLogout
     )
 }
@@ -71,9 +75,12 @@ fun HomeScreen(
 @Composable
 fun HomeContent(
     uiState: HomeUiState,
+    weatherState: WeatherUiState,
+    onRetryWeather: () -> Unit,
     onAddWater: () -> Unit,
     onRecordClick: (Long) -> Unit,
     onOpenRecords: () -> Unit,
+    onOpenSettings: () -> Unit,
     onLogout: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -90,6 +97,11 @@ fun HomeContent(
                         Icon(Icons.Filled.MoreVert, contentDescription = "Меню")
                     }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Налаштування") },
+                            leadingIcon = { Icon(Icons.Filled.Settings, null) },
+                            onClick = { menuExpanded = false; onOpenSettings() }
+                        )
                         DropdownMenuItem(
                             text = { Text("Про застосунок") },
                             leadingIcon = { Icon(Icons.Filled.Info, null) },
@@ -124,7 +136,14 @@ fun HomeContent(
                 )
             }
             item {
-                WaterCard(liters = summary.waterLiters, onAddWater = onAddWater)
+                WeatherCard(state = weatherState, onRetry = onRetryWeather)
+            }
+            item {
+                WaterCard(
+                    liters = summary.waterLiters,
+                    goal = uiState.waterGoalLiters,
+                    onAddWater = onAddWater
+                )
             }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -156,7 +175,7 @@ fun HomeContent(
             title = { Text("Про застосунок") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Smart Life, версія 0.5", style = MaterialTheme.typography.titleMedium)
+                    Text("Smart Life, версія 0.7", style = MaterialTheme.typography.titleMedium)
                     Text("Навчальний застосунок курсу «Мобільна розробка» для персонального моніторингу здоров'я: вода, пульс, сон, вага, настрій.")
                     Text(
                         "Kotlin · Jetpack Compose · MVVM",
@@ -174,13 +193,13 @@ fun HomeContent(
 
 /** Картка води з прогресом до денної цілі та кнопкою швидкого додавання. */
 @Composable
-private fun WaterCard(liters: Double, onAddWater: () -> Unit) {
+private fun WaterCard(liters: Double, goal: Double, onAddWater: () -> Unit) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(RecordType.WATER.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Text(
-                    text = "Вода: ${"%.2f".format(liters)} з $WATER_GOAL_LITERS л",
+                    text = "Вода: ${"%.2f".format(liters)} з ${"%.2f".format(goal)} л",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
                         .weight(1f)
@@ -188,7 +207,7 @@ private fun WaterCard(liters: Double, onAddWater: () -> Unit) {
                 )
             }
             LinearProgressIndicator(
-                progress = { (liters / WATER_GOAL_LITERS).toFloat().coerceIn(0f, 1f) },
+                progress = { (liters / goal).toFloat().coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth()
             )
             FilledTonalButton(onClick = onAddWater) {
